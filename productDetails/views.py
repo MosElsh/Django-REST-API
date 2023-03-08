@@ -110,13 +110,6 @@ class CountriesListView(APIView):
 
 def store_customer_details(request, accessID, jwt):
 
-    # Check for .env file. If found, continue. If not, accessID is not available so return.
-    envFile = os.path.join(".env")
-    if not(os.path.isfile(envFile)):
-        return JsonResponse({})
-        
-    dotenv.load_dotenv(envFile)
-
     # Check accessID is correct. If not, don't continue.
     if accessID != os.environ['CUSTOMER_MODEL_URL_ACCESS']:
         return JsonResponse({})
