@@ -59,9 +59,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
   'http://localhost:3000',
+  'https://moselsh-ecommerce-website.netlify.app/',
 )
 
 CSRF_COOKIE_SECURE = True
@@ -97,6 +97,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'TEST': {
+            "NAME": BASE_DIR / "test.sqlite3"
+        }
     }
 }
 
