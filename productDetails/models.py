@@ -19,6 +19,13 @@ class Customer(models.Model):
     name = models.CharField(max_length=100, null=False)
     email = models.EmailField()
 
+class Watchlist(models.Model):
+    watchlist_referenceID = models.CharField(max_length=100, primary_key=True, null=False, blank=False)
+    userID = models.ForeignKey(to=Customer, on_delete=models.CASCADE, null=False, blank=False, db_column="userID")
+    prodID = models.ForeignKey(to=Product, on_delete=models.CASCADE, null=False, blank=False, db_column="prodID")
+
+#needs work
+"""
 class Address(models.Model):
     addressID = models.CharField(max_length=100, primary_key=True, null=False, blank=False)
     fullAddressFormat = models.CharField(max_length=500, null=False)
@@ -29,7 +36,7 @@ class Address(models.Model):
     region = models.CharField(max_length=100, null=True)
     country = models.ForeignKey(to="Country", on_delete=models.DO_NOTHING)
     postalCode = models.CharField(max_length=50, null=False)
-
+"""
 
 #needs work
 """
