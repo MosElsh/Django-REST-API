@@ -1,15 +1,18 @@
 from django.http import HttpResponseRedirect, JsonResponse
 from django.db.models import Q
 from rest_framework.views import APIView
-from .models import Product, Customer, Country
+from .models import Product, Customer, Country, Watchlist
 from .serializers import ListedProductsSerializer, DetailedProductSerializer, ListedCountriesSerializer
 from uuid import uuid4
-import os, dotenv
+import os
 from jwt import decode
 
 class DetailedProductView(APIView):
+    """ Display the full product information for one product only. """
 
     def get(self, request, *args, **kwargs):
+        """ Display the full product information for one product only. """
+
         id = kwargs['id']
         product = Product.objects.filter(prodID=id)
         serializer = DetailedProductSerializer(product, many=True)
@@ -17,8 +20,11 @@ class DetailedProductView(APIView):
 
 
 class FieldSortedListedProductView(APIView):
+    """ Display the list of products sorted upon the user's choice. """
 
     def get(self, request, *args, **kwargs):
+        """ Display the list of products sorted upon the user's choice. """
+
         field = kwargs['field']
         sortType = kwargs['sortType']
 
@@ -35,8 +41,11 @@ class FieldSortedListedProductView(APIView):
         return JsonResponse(serializer.data, safe=False)
 
 class FilteredFieldSortedListedProductView(APIView):
+    """ Display the list of chosen, filtered products sorted upon the user's choice. """
 
     def get(self, request, *args, **kwargs):
+        """ Display the list of chosen, filtered products sorted upon the user's choice. """
+
         field = kwargs['field']
         sortType = kwargs['sortType']
         filterData = kwargs['filterData']
@@ -102,13 +111,17 @@ class FilteredFieldSortedListedProductView(APIView):
         return JsonResponse(serializer.data, safe=False)
 
 class CountriesListView(APIView):
+    """ Display the list of countries available. """
 
     def get(self, request, *args, **kwargs):
+        """ Display the list of countries available. """
+
         countries = Country.objects.all().order_by("name")
         serializer = ListedCountriesSerializer(countries, many=True)
         return JsonResponse(serializer.data, safe=False)
 
 def store_customer_details(request, accessID, jwt):
+    """ Store the customer's new details. Updates the name of a returning user if needed. """
 
     # Check accessID is correct. If not, don't continue.
     if accessID != os.environ['CUSTOMER_MODEL_URL_ACCESS']:
@@ -124,7 +137,76 @@ def store_customer_details(request, accessID, jwt):
         newCustomer = Customer(**decodedData)
         newCustomer.save()
 
+    # Check to see that the user's name is up to date. If not, update the user with that new name.
+    user_name_old = Customer.objects.filter(email=email).values_list("name")[0][0]
+    if user_name_old != decodedData['name']:
+        Customer.objects.filter(email=email).update(name=decodedData['name'])
+
     return JsonResponse({})
+
+
+
+def get_watchlist_products(request, jwt):
+    """ Returns the list products that were starred by the user. """
+
+    # Get the user ID using the email.
+    email = decode(jwt, os.environ['JWT_SECRET'], algorithms=['HS256'])['email']
+    customers = Customer.objects.filter(email=email).values()
+    if len(customers) == 0:
+        return JsonResponse({}, safe=False)
+    userID = customers[0]['userID']
+
+    # Return the user's watchlist.
+    watchlist_data = []
+    products = Product.objects.all()
+    for product in products:
+        watchlist_reference = product.watchlist_set.filter(userID=userID).values()
+        if len(watchlist_reference) == 1:
+            watchlist_data.append([list(Product.objects.filter(prodID=watchlist_reference[0]['prodID_id']).values())[0], watchlist_reference[0]])
+
+    return JsonResponse(watchlist_data, safe=False)
+
+
+
+
+
+
+
+
+def process_watchlist_change(request, jwt):
+    """ Adds or removes products from the user's watchlist. """
+
+    decoded_data = decode(jwt, os.environ['JWT_SECRET'], algorithms=['HS256'])
+    email = decoded_data['email']
+
+    # Get the user ID using the email.
+    customers = Customer.objects.filter(email=email).values()
+    if len(customers) == 0:
+        return JsonResponse({}, safe=False)
+    userID = customers[0]['userID']
+
+    prodID = decoded_data['prodID']
+    process = decoded_data['process']
+
+    # Process watchlist changes by adding or removing a product from the watchlist.
+    if process == "add":
+        watchlist_referenceID = str(uuid4())
+
+        if len(Product.objects.get(prodID=prodID)) != 1:
+            return JsonResponse({}, safe=False)
+
+        Watchlist(watchlist_referenceID=watchlist_referenceID, prodID=Product.objects.get(prodID=prodID), userID=Customer.objects.get(userID=userID)).save()
+    elif process == "remove":
+        Watchlist.objects.filter(prodID=prodID, userID=userID).delete()
+
+    return JsonResponse(["Done"], safe=False)
+
+
+
+
+
+
+
 
 def home(request):
     return HttpResponseRedirect("api/products/asc/prodID")

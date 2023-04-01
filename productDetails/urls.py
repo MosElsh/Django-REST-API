@@ -11,4 +11,6 @@ urlpatterns = [
     path("api/product/<str:id>", views.DetailedProductView.as_view(), name="Detailed Product Data"),
     path("api/countries", views.CountriesListView.as_view(), name="Name Ordered Countries List Data"),
     path("customers/<str:accessID>/<str:jwt>", views.store_customer_details, name="Store Customer Details"),
+    path("api/watchlist/<str:jwt>/get", views.get_watchlist_products, name="Get User Watchlist Products"),
+    path("api/watchlist/<str:jwt>", views.process_watchlist_change, name="Add/Remove Product in Watchlist"),
 ]
