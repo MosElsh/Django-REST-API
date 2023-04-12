@@ -61,7 +61,7 @@ MIDDLEWARE = [
 
 CORS_ORIGIN_WHITELIST = (
   'http://localhost:3000',
-  'https://moselsh-ecommerce-website.netlify.app/',
+  'https://moselsh-ecommerce-website.netlify.app',
 )
 
 CSRF_COOKIE_SECURE = True
