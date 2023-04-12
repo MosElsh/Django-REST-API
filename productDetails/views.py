@@ -192,7 +192,7 @@ def process_watchlist_change(request, jwt):
     if process == "add":
         watchlist_referenceID = str(uuid4())
 
-        if len(Product.objects.get(prodID=prodID)) != 1:
+        if len(Product.objects.filter(prodID=prodID)) != 1:
             return JsonResponse({}, safe=False)
 
         Watchlist(watchlist_referenceID=watchlist_referenceID, prodID=Product.objects.get(prodID=prodID), userID=Customer.objects.get(userID=userID)).save()
